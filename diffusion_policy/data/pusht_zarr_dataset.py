@@ -47,6 +47,7 @@ class PushTImageZarrDataset(Dataset):
 
         root = zarr.open(zarr_path, mode="r")
         data = root["data"] # data group
+        self.data_keys = list(data.array_keys())
         meta = root["meta"] # metadata group
 
         # episode boundaries
@@ -59,7 +60,9 @@ class PushTImageZarrDataset(Dataset):
             elif "img" in data:
                 image_key = "img"
             else:
-                raise KeyError(f"Could not find image key in zarr['data']. keys={list(data.array_keys())}")
+                raise KeyError(
+                    f"Could not find image key in zarr['data']. keys={self.data_keys}"
+                )
 
         # data arrays (either zarr arrays or numpy arrays)
         # if in_memory=True, we load all data into RAM as numpy arrays

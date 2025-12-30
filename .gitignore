@@ -1,0 +1,89 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+.eggs/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Type checker caches
+.mypy_cache/
+.dmypy.json
+.dmypy.json
+.pyre/
+.pytype/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+*.env
+.envrc
+
+# Logs & local state
+*.log
+logs/
+*.pid
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.un~
+.DS_Store
+Thumbs.db
+
+# Project data artifacts
+# Keep lightweight config under version control, ignore heavy blobs
+*.zarr/
+*.zarr.zip
+*.npz
+*.npy
+*.h5
+*.pt
+*.pth
+*.onnx
+*.ckpt
+
+# Local datasets & caches
+data/**/cache/
+data/**/tmp/
+data/**/raw/
+data/**/exports/
+
+# Checkpoints & experiment outputs
+checkpoints/
+outputs/
+results/
+runs/
+wandb/
+mlruns/
