@@ -3,6 +3,13 @@ import argparse
 import torch
 from torch.utils.data import DataLoader
 
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from diffusion_policy.data.pusht_zarr_dataset import PushTImageZarrDataset, PushTWindowSpec
 from diffusion_policy.models.encoders import ObsConditionEncoder
 from diffusion_policy.models.denoisers import TemporalUNetDenoiser
@@ -36,7 +43,7 @@ def main():
     ).to(args.device)
 
     loss = policy(batch)
-    print("train loss:", float(loss))
+    print("train loss:", float(loss.detach()))
 
     act = policy.sample_actions(batch["obs_image"], batch["obs_agent_pos"], num_inference_steps=10)
     print("sampled action traj:", act.shape, act.min().item(), act.max().item())

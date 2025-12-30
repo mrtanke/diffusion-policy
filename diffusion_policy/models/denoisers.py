@@ -53,7 +53,7 @@ class TemporalUNetDenoiser(nn.Module):
 
     Denoiser for action trajectories.
     Input:
-      x_noisy: (B, H, action_dim)
+      x_noisy: (B, H, action_dim) -> H = horizon
       t:       (B,)
       cond:    (B, cond_dim)
     Output:
@@ -105,6 +105,9 @@ class TemporalUNetDenoiser(nn.Module):
         )
 
     def forward(self, x_noisy: torch.Tensor, t: torch.Tensor, cond: torch.Tensor) -> torch.Tensor:
+        # keep target horizon in case stride-2 downsamples lose a step due to rounding
+        target_h = x_noisy.shape[1]
+
         # x_noisy: (B,H,action_dim) -> (B,action_dim,H)
         x = x_noisy.transpose(1, 2)
 
@@ -140,5 +143,11 @@ class TemporalUNetDenoiser(nn.Module):
             x = x + skip
             x = self.ups[i](x, tc)
 
-        eps = self.out_proj(x)                   # (B, action_dim, H)
+        eps = self.out_proj(x)                   # (B, action_dim, H_cur)
+
+        # when horizon is not divisible by 2^(depth-1), round-trip down/up sampling can shrink the length;
+        # resize back to the requested horizon so training targets match predictions
+        if eps.shape[-1] != target_h:
+            eps = F.interpolate(eps, size=target_h, mode="linear", align_corners=False)
+
         return eps.transpose(1, 2)               # (B, H, action_dim)
