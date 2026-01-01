@@ -6,6 +6,7 @@ from typing import Dict
 
 import numpy as np
 import torch
+from typing import Any
 
 
 @dataclass
@@ -52,3 +53,16 @@ class MinMaxNormalizer:
         smax = torch.as_tensor(s.max, device=y.device, dtype=y.dtype)
         x01 = (y + 1.0) / 2.0
         return x01 * (smax - smin) + smin
+
+    def state_dict(self) -> Dict[str, Dict[str, Any]]:
+        out = {}
+        for k, v in self.stats.items():
+            out[k] = {"min": v.min, "max": v.max}
+        return out
+    
+    @staticmethod
+    def load_state_dict(state: Dict[str, Dict[str, Any]]) -> "MinMaxNormalizer":
+        stats = {}
+        for k, v in state.items():
+            stats[k] = MinMaxStats(min=np.asarray(v["min"]), max=np.asarray(v["max"]))
+        return MinMaxNormalizer(stats=stats)
