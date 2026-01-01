@@ -1,13 +1,21 @@
 ## diffusion-policy
 Implementation of **Diffusion Policy**, from [Diffusion Policy: Visuomotor Policy Learning via Action Diffusion](https://arxiv.org/abs/2303.04137)
 
-This repo trains a policy to denoise an action trajectory conditioned on a short observation history.
+This repo trains a policy to denoise an action trajectory conditioned on a short observation history(images + agent positions). At inference time, the policy generates a horizon of actions and typically executes only the first few steps in a **receding-horizon** loop.
 
-Training uses the standard DDPM epsilon objective:
+### Objective
+
+Training uses the standard DDPM **epsilon prediction** objective:
 
 $$
-\mathcal{L} = \mathbb{E}_{t,\,\varepsilon}\,\left[\lVert \varepsilon_\theta(x_t, t, c) - \varepsilon \rVert_2^2\right]
+\mathcal{L} = \mathbb{E}_{t,\,\varepsilon}\left[\left\lVert \varepsilon_\theta(x_t, t, c) - \varepsilon \right\rVert_2^2\right]
 $$
+
+- \(x_0\): the ground-truth action trajectory
+- \(x_t\): the noisy trajectory at diffusion timestep \(t\)
+- \(c\): conditioning from observations
+- \(\varepsilon\): Gaussian noise
+- \(\varepsilon_\theta(\cdot)\): denoiser network (policy)
 
 ### Install
 
@@ -22,21 +30,17 @@ pip install -e .
 
 ### Dataset
 
-This repo expects a PushT replay buffer stored as a **zarr** directory, e.g.:
+This repo expects a PushT replay buffer stored as a **zarr** directory:
 
 - `data/pusht/pusht_cchi_v7_replay.zarr`
 
-The dataset loader is:
-
-- `diffusion_policy/data/pusht_zarr_dataset.py` → `PushTImageZarrDataset`
-
-It produces one training sample as:
+The dataset loader produces one training sample as:
 
 - `obs_image`: `(To, 3, 96, 96)` in `[0, 1]`
 - `obs_agent_pos`: `(To, 2)` normalized to `[-1, 1]`
 - `action`: `(H, 2)` normalized to `[-1, 1]`
 
-Window defaults (see `PushTWindowSpec`):
+Window defaults:
 
 - observation steps: `To = 2`
 - horizon: `H = 10`
@@ -76,9 +80,6 @@ accelerate launch train.py \
   --mixed_precision no
 ```
 
-Checkpoints are saved to `--out_dir` as `ckpt_step_*.pt` and `ckpt_final.pt`.
-
-
 ### Evaluation (PushT)
 
 Roll out a checkpoint in the `pusht-v0` environment:
@@ -91,12 +92,7 @@ python eval_pusht.py \
   --render
 ```
 
-Notes:
-
-- The evaluator uses **receding-horizon execution**: it samples a length-`H` trajectory and executes the first `Ta=8` actions.
-- Actions are trained in normalized space and then unnormalized using the saved `MinMaxNormalizer` stats.
-
 
 ### Acknowledgements
 
-This is an educational implementation inspired by the Diffusion Policy line of work and the broader diffusion-model ecosystem.
+This is an implementation inspired by the Diffusion Policy line of work and the broader diffusion-model ecosystem.
