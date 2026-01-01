@@ -85,7 +85,7 @@ class DiffusionPolicy(nn.Module):
         # Predict noise epsilon
         eps_pred = self.denoiser(x_noisy, t, cond)
 
-        loss = F.mse_loss(eps_pred, noise)
+        loss = F.mse_loss(eps_pred, noise) # eps_pred, noise: (B,H,action_dim)
         return loss
 
     @torch.no_grad()

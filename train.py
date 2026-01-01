@@ -71,11 +71,11 @@ def main():
     
     optimizer = torch.optim.AdamW(policy.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
-    # EMA model
-    ema = EMA(policy, beta=0.995, update_after_step=100, update_every=1)
-
     # accelerate prepare
     policy, optimizer, dl = accelerator.prepare(policy, optimizer, dl)
+
+    # Instantiate EMA after prepare to avoid device issues
+    ema = EMA(accelerator.unwrap_model(policy), beta=0.995, update_after_step=100, update_every=1)
 
     # resume if needed
     step = 0
