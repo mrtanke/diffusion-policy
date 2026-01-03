@@ -182,7 +182,7 @@ class PushTImageZarrDataset(Dataset):
             padded[s0:s1] = imgs
             imgs = padded
 
-        # keep only last To observations
+        # keep only first To observations
         obs_image = imgs[:To]
         obs_agent_pos = sample_np["agent_pos"][:To]
         action = sample_np["action"]  # full horizon H

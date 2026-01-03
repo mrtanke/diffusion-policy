@@ -1,11 +1,35 @@
 # diffusion_policy/models/denoisers.py
 from __future__ import annotations
 
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from diffusion_policy.models.nn_utils import SinusoidalPosEmb, MLP
+class SinusoidalPosEmb(nn.Module):
+    """
+    An embedding technique from "Attention is All You Need" (Vaswani et al., 2017)
+    
+    Standard sinusoidal embedding for diffusion timestep k.
+    Input: k (B,) int/float
+    Output: (B, dim)
+    """
+    def __init__(self, dim: int):
+        super().__init__()
+        self.dim = dim
+
+    def forward(self, k: torch.Tensor) -> torch.Tensor: # k: (B,)
+        device = k.device
+        half = self.dim // 2
+        emb_scale = math.log(10000) / (half - 1)
+        freqs = torch.exp(torch.arange(half, device=device) * -emb_scale) # (half,)
+
+        # k: (B,) -> (B, half)
+        args = k.float().unsqueeze(-1) * freqs.unsqueeze(0) # (B, half)
+        emb = torch.cat([args.sin(), args.cos()], dim=-1) # (B, dim)
+        if self.dim % 2 == 1: # zero pad
+            emb = F.pad(emb, (0, 1), value=0.0)
+        return emb # (B, dim)
 
 
 class ResBlock1D(nn.Module):
@@ -54,7 +78,7 @@ class TemporalUNetDenoiser(nn.Module):
     Denoiser for action trajectories.
     Input:
       x_noisy: (B, H, action_dim) -> H = horizon
-      t:       (B,)
+      k:       (B,)
       cond:    (B, cond_dim)
     Output:
       eps_pred:(B, H, action_dim)
@@ -104,7 +128,7 @@ class TemporalUNetDenoiser(nn.Module):
             nn.Conv1d(base_dim, action_dim, 1),
         )
 
-    def forward(self, x_noisy: torch.Tensor, t: torch.Tensor, cond: torch.Tensor) -> torch.Tensor:
+    def forward(self, x_noisy: torch.Tensor, k: torch.Tensor, cond: torch.Tensor) -> torch.Tensor:
         # keep target horizon in case stride-2 downsamples lose a step due to rounding
         target_h = x_noisy.shape[1]
 
@@ -112,9 +136,9 @@ class TemporalUNetDenoiser(nn.Module):
         x = x_noisy.transpose(1, 2)
 
         # combine time + condition into a single conditioning vector
-        t_emb = self.time_emb(t)                 # (B, time_dim)
-        c_emb = self.cond_proj(cond)             # (B, time_dim)
-        tc = t_emb + c_emb                       # (B, time_dim)
+        t_emb = self.time_emb(k)                 # (B, time_dim)
+        cond_emb = self.cond_proj(cond)             # (B, time_dim)
+        tc = t_emb + cond_emb                       # (B, time_dim)
 
         x = self.in_proj(x)                      # (B, base_dim, H)
 

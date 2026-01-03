@@ -3,19 +3,7 @@ Implementation of **Diffusion Policy**, from [Diffusion Policy: Visuomotor Polic
 
 This repo trains a policy to denoise an action trajectory conditioned on a short observation history(images + agent positions). At inference time, the policy generates a horizon of actions and typically executes only the first few steps in a **receding-horizon** loop.
 
-### Objective
-
-Training uses the standard DDPM **epsilon prediction** objective:
-
-$$
-\mathcal{L} = \mathbb{E}_{t,\,\varepsilon}\left[\left\lVert \varepsilon_\theta(x_t, t, c) - \varepsilon \right\rVert_2^2\right]
-$$
-
-- \(x_0\): the ground-truth action trajectory
-- \(x_t\): the noisy trajectory at diffusion timestep \(t\)
-- \(c\): conditioning from observations
-- \(\varepsilon\): Gaussian noise
-- \(\varepsilon_\theta(\cdot)\): denoiser network (policy)
+More implementation details: [Reproducing Diffusion Policy](https://mrtanke.github.io/projects/2026-01-02-reproducing-diffusion-policy/)
 
 ### Install
 

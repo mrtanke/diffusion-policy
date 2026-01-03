@@ -23,7 +23,7 @@ class DiffusionPolicy(nn.Module):
     """
     Full policy:
       cond = obs_encoder(obs)
-      eps_pred = denoiser(x_noisy, t, cond)
+      eps_pred = denoiser(x_noisy, k, cond)
     Uses diffusers DDPMScheduler for noise/add/step.
     """
     def __init__(
@@ -70,7 +70,7 @@ class DiffusionPolicy(nn.Module):
         cond = self.obs_encoder(obs_image, obs_agent_pos)  # (B, cond_dim)
 
         # Sample diffusion timestep per batch element
-        t = torch.randint(
+        k = torch.randint(
             low=0,
             high=self.noise_scheduler.config.num_train_timesteps,
             size=(B,),
@@ -80,10 +80,10 @@ class DiffusionPolicy(nn.Module):
 
         # Add noise
         noise = torch.randn_like(action)
-        x_noisy = self.noise_scheduler.add_noise(action, noise, t)
+        x_noisy = self.noise_scheduler.add_noise(action, noise, k)
 
         # Predict noise epsilon
-        eps_pred = self.denoiser(x_noisy, t, cond)
+        eps_pred = self.denoiser(x_noisy, k, cond)
 
         loss = F.mse_loss(eps_pred, noise) # eps_pred, noise: (B,H,action_dim)
         return loss
@@ -114,11 +114,11 @@ class DiffusionPolicy(nn.Module):
 
         self.noise_scheduler.set_timesteps(num_inference_steps, device=device)
 
-        for t in self.noise_scheduler.timesteps:
-            # t is scalar tensor; expand to (B,)
-            tt = torch.full((B,), int(t), device=device, dtype=torch.long)
-            eps = self.denoiser(x, tt, cond)
-            step = self.noise_scheduler.step(eps, t, x, generator=generator)
+        for k in self.noise_scheduler.timesteps:
+            # k is scalar tensor; expand to (B,)
+            kk = torch.full((B,), int(k), device=device, dtype=torch.long)
+            eps = self.denoiser(x, kk, cond)
+            step = self.noise_scheduler.step(eps, k, x, generator=generator)
             x = step.prev_sample
 
         # optional clamp to training range
