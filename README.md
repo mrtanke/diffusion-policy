@@ -60,12 +60,7 @@ python scripts/smoke_test_model.py --zarr_path data/pusht/pusht_cchi_v7_replay.z
 Train with `accelerate`:
 
 ```bash
-accelerate launch train.py \
-  --zarr_path data/pusht/pusht_cchi_v7_replay.zarr \
-  --out_dir outputs/pusht_image \
-  --batch_size 64 \
-  --train_steps 200000 \
-  --mixed_precision no
+accelerate launch train.py --zarr_path data/pusht/pusht_cchi_v7_replay.zarr --out_dir outputs/pusht_image --batch_size 64 --train_steps 200000 --mixed_precision no
 ```
 
 ### Evaluation (PushT)
@@ -73,11 +68,7 @@ accelerate launch train.py \
 Roll out a checkpoint in the `pusht-v0` environment:
 
 ```bash
-python eval_pusht.py \
-  --ckpt outputs/pusht_image/ckpt_final.pt \
-  --episodes 10 \
-  --inference_steps 16 \
-  --render
+python eval_pusht.py --ckpt outputs/pusht_image/ckpt_final.pt --episodes 10 --inference_steps 16 --render
 ```
 
 
